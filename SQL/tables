@@ -1,0 +1,17 @@
+CREATE TABLE Transactions (
+    TransactionID INT IDENTITY(1,1) PRIMARY KEY,
+    ProductID     INT         NOT NULL FOREIGN KEY REFERENCES Products(ProductID),
+    UserID        INT         NOT NULL FOREIGN KEY REFERENCES Users(UserID),
+    TransType     VARCHAR(10) NOT NULL CHECK (TransType IN ('IN', 'OUT')),
+    Quantity      INT         NOT NULL,
+    Note          VARCHAR(255),
+    TransDate     DATETIME    DEFAULT GETDATE()
+);
+
+
+CREATE TABLE StockAlerts (
+    AlertID   INT IDENTITY(1,1) PRIMARY KEY,
+    ProductID INT NOT NULL FOREIGN KEY REFERENCES Products(ProductID),
+    AlertMsg  VARCHAR(255),
+    AlertDate DATETIME DEFAULT GETDATE()
+);
