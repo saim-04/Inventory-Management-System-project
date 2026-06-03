@@ -1,0 +1,16 @@
+CREATE VIEW vw_ProductSummary AS
+    SELECT p.ProductID,
+           p.ProductName,
+           p.Category,
+           p.Price,
+           p.Quantity,
+           p.MinStock,
+           s.SupplierName,
+           (p.Price * p.Quantity) AS TotalStockValue,
+           CASE
+               WHEN p.Quantity = 0           THEN 'OUT OF STOCK'
+               WHEN p.Quantity <= p.MinStock  THEN 'LOW STOCK'
+               ELSE 'OK'
+           END AS StockStatus
+    FROM   Products p
+    LEFT JOIN Suppliers s ON p.SupplierID = s.SupplierID;
