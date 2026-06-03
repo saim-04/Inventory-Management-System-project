@@ -1,0 +1,40 @@
+CREATE PROCEDURE sp_UpdateProduct
+    @ProductID   INT,
+    @ProductName VARCHAR(100),
+    @Category    VARCHAR(50),
+    @Price       DECIMAL(10,2),
+    @Quantity    INT,
+    @MinStock    INT
+AS
+BEGIN
+    UPDATE Products
+    SET ProductName = @ProductName,
+        Category    = @Category,
+        Price       = @Price,
+        Quantity    = @Quantity,
+        MinStock    = @MinStock,
+        UpdatedAt   = GETDATE()
+    WHERE ProductID = @ProductID;
+END
+
+[12:40 am, 29/05/2026] Saim CSE: CREATE PROCEDURE sp_DeleteProduct
+    @ProductID INT
+AS
+BEGIN
+    DELETE FROM Products
+    WHERE ProductID = @ProductID;
+END
+[12:40 am, 29/05/2026] Saim CSE: CREATE PROCEDURE sp_GetAllProducts
+AS
+BEGIN
+    SELECT p.ProductID,
+           p.ProductName,
+           p.Category,
+           p.Price,
+           p.Quantity,
+           p.MinStock,
+           s.SupplierName
+    FROM   Products p
+    LEFT JOIN Suppliers s ON p.SupplierID = s.SupplierID
+    ORDER BY p.ProductName;
+END

@@ -14,3 +14,12 @@ CREATE VIEW vw_ProductSummary AS
            END AS StockStatus
     FROM   Products p
     LEFT JOIN Suppliers s ON p.SupplierID = s.SupplierID;
+CREATE VIEW vw_LowStockProducts AS
+    SELECT ProductID,
+           ProductName,
+           Category,
+           Quantity,
+           MinStock,
+           (MinStock - Quantity) AS ShortfallQty
+    FROM   Products
+    WHERE  Quantity <= MinStock;
