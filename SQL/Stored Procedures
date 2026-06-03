@@ -1,0 +1,142 @@
+CREATE PROCEDURE sp_SearchProducts
+    @SearchTerm VARCHAR(100)
+AS
+BEGIN
+    SELECT p.ProductID,
+           p.ProductName,
+           p.Category,
+           p.Price,
+           p.Quantity,
+           p.MinStock,
+           s.SupplierName
+    FROM   Products p
+    LEFT JOIN Suppliers s ON p.SupplierID = s.SupplierID
+    WHERE  p.ProductName LIKE '%' + @SearchTerm + '%'
+       OR  p.Category    LIKE '%' + @SearchTerm + '%';
+END
+
+CREATE TRIGGER trg_LogQuantityChange
+ON Products
+AFTER UPDATE
+AS
+BEGIN
+    IF UPDATE(Quantity)
+    BEGIN
+        INSERT INTO Transactions
+            (ProductID, UserID, TransType, Quantity, Note)
+        SELECT
+            i.ProductID,
+            1,
+            CASE WHEN i.Quantity > d.Quantity THEN 'IN' ELSE 'OUT' END,
+            ABS(i.Quantity - d.Quantity),
+            'Auto-logged by system'
+        FROM inserted i
+        JOIN deleted  d ON i.ProductID = d.ProductID;
+    END
+END
+
+
+
+CREATE PROCEDURE sp_ChangePassword
+    @UserID      INT,
+    @OldPassword VARCHAR(255),
+    @NewPassword VARCHAR(255)
+AS
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Users
+        WHERE UserID   = @UserID
+          AND Password = @OldPassword
+    )
+    BEGIN
+        UPDATE Users
+        SET Password = @NewPassword
+        WHERE UserID = @UserID;
+
+        SELECT 'SUCCESS' AS Result;
+    END
+    ELSE
+    BEGIN
+        SELECT 'WRONG_PASSWORD' AS Result;
+    END
+END
+
+EXEC sp_LoginUser @Username = 'admin', @Password = 'admin123';
+
+
+UPDATE Users
+SET Password = CONVERT(VARCHAR(64),
+    HASHBYTES('SHA2_256', 'admin123'), 2)
+WHERE Username = 'admin';
+GO
+
+SELECT Username, Password FROM Users;
+
+
+
+
+ALTER PROCEDURE sp_ChangePassword
+    @UserID      INT,
+    @OldPassword VARCHAR(255),
+    @NewPassword VARCHAR(255)
+AS
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Users
+        WHERE UserID = @UserID
+          AND Password = CONVERT(VARCHAR(64),
+              HASHBYTES('SHA2_256', @OldPassword), 2)
+    )
+    BEGIN
+        UPDATE Users
+        SET Password = CONVERT(VARCHAR(64),
+            HASHBYTES('SHA2_256', @NewPassword), 2)
+        WHERE UserID = @UserID;
+
+        SELECT 'SUCCESS' AS Result;
+    END
+    ELSE
+    BEGIN
+        SELECT 'WRONG_PASSWORD' AS Result;
+    END
+END
+GO
+
+
+ALTER PROCEDURE sp_LoginUser
+    @Username VARCHAR(50),
+    @Password VARCHAR(255)
+AS
+BEGIN
+    SELECT UserID, Username, FullName, Role
+    FROM   Users
+    WHERE  Username = @Username
+      AND  Password = CONVERT(VARCHAR(64),
+           HASHBYTES('SHA2_256', @Password), 2);
+END
+GO
+
+
+
+
+CREATE PROCEDURE sp_AddSupplier
+    @SupplierName VARCHAR(100),
+    @Phone        VARCHAR(20),
+    @Email        VARCHAR(100),
+    @Address      VARCHAR(255)
+AS
+BEGIN
+    INSERT INTO Suppliers (SupplierName, Phone, Email, Address)
+    VALUES (@SupplierName, @Phone, @Email, @Address);
+    SELECT SCOPE_IDENTITY() AS NewSupplierID;
+END
+GO
+
+CREATE PROCEDURE sp_GetAllSuppliers
+AS
+BEGIN
+    SELECT SupplierID, SupplierName, Phone, Email, Address
+    FROM   Suppliers
+    ORDER BY SupplierName;
+END
+GO
